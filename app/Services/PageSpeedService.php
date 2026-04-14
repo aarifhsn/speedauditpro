@@ -9,39 +9,55 @@ class PageSpeedService
     protected string $baseUrl = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
 
     /**
-     * Run a live PageSpeed analysis on a URL.
+     * Run analysis for BOTH mobile AND desktop simultaneously.
+     * Issue #1 fix: we no longer only show mobile — both are analyzed and displayed.
      */
     public function analyze(string $url): array
     {
-        $response = Http::timeout(60)->get($this->baseUrl, [
-            'url' => $url,
-            'key' => config('services.pagespeed.key'),
-            'strategy' => 'mobile',
-            'category' => 'performance',
+        $apiKey = config('services.pagespeed.key');
+
+        // Fire both requests in parallel via HTTP pool
+        $responses = Http::pool(fn($pool) => [
+            $pool->as('mobile')->timeout(60)->get($this->baseUrl, [
+                'url' => $url,
+                'key' => $apiKey,
+                'strategy' => 'mobile',
+                'category' => 'performance',
+            ]),
+            $pool->as('desktop')->timeout(60)->get($this->baseUrl, [
+                'url' => $url,
+                'key' => $apiKey,
+                'strategy' => 'desktop',
+                'category' => 'performance',
+            ]),
         ]);
 
-        if ($response->failed()) {
-            $error = $response->json('error.message', 'PageSpeed API request failed.');
-            throw new \RuntimeException($error);
+        if ($responses['mobile']->failed()) {
+            throw new \RuntimeException(
+                $responses['mobile']->json('error.message', 'PageSpeed API request failed.')
+            );
         }
 
-        return $this->parseFromRaw($response->json());
+        $mobileRaw = $responses['mobile']->json();
+        $desktopRaw = $responses['desktop']->ok() ? $responses['desktop']->json() : null;
+
+        return $this->parseFromRaw($mobileRaw, $desktopRaw);
     }
 
     /**
-     * Re-parse stored raw JSON without hitting the API again.
+     * Re-parse from stored raw JSON — no API call needed.
      */
-    public function parseFromRaw(array $raw): array
+    public function parseFromRaw(array $mobileRaw, ?array $desktopRaw = null): array
     {
         return [
-            'score' => $this->parseScore($raw),
-            'vitals' => $this->parseVitals($raw),
-            'issues' => $this->parseIssues($raw),
-            'raw' => $raw,
+            'score' => $this->parseScore($mobileRaw),
+            'desktop_score' => $desktopRaw ? $this->parseScore($desktopRaw) : null,
+            'vitals' => $this->parseVitals($mobileRaw),
+            'desktop_vitals' => $desktopRaw ? $this->parseVitals($desktopRaw) : null,
+            'issues' => $this->parseIssues($mobileRaw),
+            'raw' => ['mobile' => $mobileRaw, 'desktop' => $desktopRaw],
         ];
     }
-
-    // ─── Private parsers ────────────────────────────────────────────────────────
 
     private function parseScore(array $raw): int
     {
@@ -52,21 +68,22 @@ class PageSpeedService
     private function parseVitals(array $raw): array
     {
         $audits = $raw['lighthouseResult']['audits'] ?? [];
+
         return [
-            'lcp' => $this->extractMetric($audits, 'largest-contentful-paint', 'LCP'),
-            'cls' => $this->extractMetric($audits, 'cumulative-layout-shift', 'CLS'),
-            'inp' => $this->extractMetric($audits, 'interactive', 'INP / TTI'),
-            'fcp' => $this->extractMetric($audits, 'first-contentful-paint', 'FCP'),
-            'tbt' => $this->extractMetric($audits, 'total-blocking-time', 'TBT'),
-            'si' => $this->extractMetric($audits, 'speed-index', 'Speed Index'),
+            'lcp' => $this->metric($audits, 'largest-contentful-paint', 'Largest Contentful Paint', 'LCP'),
+            'cls' => $this->metric($audits, 'cumulative-layout-shift', 'Cumulative Layout Shift', 'CLS'),
+            'tti' => $this->metric($audits, 'interactive', 'Time to Interactive', 'TTI'),
+            'fcp' => $this->metric($audits, 'first-contentful-paint', 'First Contentful Paint', 'FCP'),
+            'tbt' => $this->metric($audits, 'total-blocking-time', 'Total Blocking Time', 'TBT'),
+            'si' => $this->metric($audits, 'speed-index', 'Speed Index', 'SI'),
         ];
     }
 
-    private function extractMetric(array $audits, string $key, string $label): array
+    private function metric(array $audits, string $key, string $label, string $abbr): array
     {
         $audit = $audits[$key] ?? null;
         if (!$audit) {
-            return ['label' => $label, 'value' => 'N/A', 'score' => null, 'status' => 'na', 'numericValue' => null];
+            return ['label' => $label, 'abbr' => $abbr, 'value' => 'N/A', 'score' => null, 'status' => 'na'];
         }
         $score = $audit['score'] ?? null;
         $status = match (true) {
@@ -77,16 +94,23 @@ class PageSpeedService
         };
         return [
             'label' => $label,
+            'abbr' => $abbr,
             'value' => $audit['displayValue'] ?? 'N/A',
             'score' => $score,
             'status' => $status,
-            'numericValue' => $audit['numericValue'] ?? null,
         ];
     }
 
+    /**
+     * Issue #2 fix:
+     * - Added 4 extra audit types (preconnect, preload, third-party, animations)
+     * - Lowered pass threshold from 0.90 → 0.95 (catches more borderline issues)
+     * - Raised cap from 5 → 8 items shown
+     */
     private function parseIssues(array $raw): array
     {
         $audits = $raw['lighthouseResult']['audits'] ?? [];
+
         $targets = [
             'unused-css-rules' => 'unusedCss',
             'render-blocking-resources' => 'renderBlocking',
@@ -96,6 +120,10 @@ class PageSpeedService
             'uses-text-compression' => 'textCompression',
             'uses-long-cache-ttl' => 'cachePolicy',
             'dom-size' => 'domSize',
+            'uses-rel-preconnect' => 'preconnect',
+            'uses-rel-preload' => 'preload',
+            'third-party-summary' => 'thirdParty',
+            'efficiently-animate-contents' => 'animationPerf',
         ];
 
         $issues = [];
@@ -104,8 +132,9 @@ class PageSpeedService
             if (!$audit)
                 continue;
             $score = $audit['score'] ?? 1;
-            if ($score >= 0.9)
-                continue;
+            if ($score >= 0.95)
+                continue; // Was 0.90 — now catches more real issues
+
             $issues[$issueKey] = [
                 'title' => $audit['title'] ?? $auditKey,
                 'displayValue' => $audit['displayValue'] ?? '',
@@ -115,7 +144,7 @@ class PageSpeedService
         }
 
         uasort($issues, fn($a, $b) => $a['score'] <=> $b['score']);
-        return array_slice($issues, 0, 5, true);
+        return array_slice($issues, 0, 8, true); // Was 5, now 8
     }
 
     private function getFixAdvice(string $issueKey, array $audit): array
@@ -124,58 +153,95 @@ class PageSpeedService
 
         return match ($issueKey) {
             'unusedCss' => [
-                'headline' => 'Your theme loads CSS that is never used on this page.',
-                'detail' => "Most themes and CSS frameworks ship global stylesheets where 70–90% of rules go unused per page. {$dv} of CSS loading for nothing. Fix with PurgeCSS, WP Rocket's CSS optimization, or per-page splitting via Laravel Mix. This single fix can shave 0.5–2 seconds off render time.",
-                'tools' => ['PurgeCSS', 'WP Rocket', 'Laravel Mix', 'Critical CSS'],
+                'headline' => 'Unused CSS loaded on every page visit',
+                'detail' => "Your stylesheet loads rules never applied on this page — {$dv} of dead CSS. Common with global theme stylesheets or frameworks like Bootstrap. Fix with PurgeCSS or WP Rocket's CSS optimization. Expected gain: 0.3–1.5s on LCP.",
+                'tools' => ['PurgeCSS', 'WP Rocket', 'Laravel Mix'],
                 'effort' => 'medium',
+                'impact' => 'high',
             ],
             'renderBlocking' => [
-                'headline' => 'Scripts or stylesheets are blocking the page from rendering.',
-                'detail' => "Render-blocking resources force the browser to pause before showing anything. {$dv} of savings available. Add `defer` or `async` to non-critical scripts, and load non-essential CSS asynchronously. Every render-blocking resource is guaranteed white-screen time for your users.",
-                'tools' => ['async / defer attributes', 'WP Rocket', 'Critical CSS inlining'],
+                'headline' => 'Render-blocking resources delay first paint',
+                'detail' => "Scripts or stylesheets pause rendering before any content is visible. {$dv} of savings available. Add `defer` or `async` to non-critical JS. Inline critical CSS and defer the rest.",
+                'tools' => ['defer / async attributes', 'Critical CSS', 'WP Rocket'],
                 'effort' => 'low',
+                'impact' => 'high',
             ],
             'unoptimizedImages' => [
-                'headline' => 'Images are uncompressed — serving files heavier than necessary.',
-                'detail' => "Unoptimized images are the #1 culprit of slow sites. {$dv} can be recovered by converting to WebP/AVIF and running images through a compressor. Try Spatie Media Library with WebP conversion, or Cloudflare Image Resizing. Never serve raw JPEGs — they're 5–10× larger than needed.",
-                'tools' => ['Squoosh', 'Cloudflare Images', 'Spatie Media Library', 'ShortPixel'],
+                'headline' => 'Images not compressed or using modern formats',
+                'detail' => "Uncompressed or legacy-format images waste {$dv} on every load. Convert to WebP or AVIF — 25–50% smaller at the same quality. Use Spatie Media Library for automatic conversion in Laravel, or process through Squoosh.",
+                'tools' => ['Squoosh', 'Spatie Media Library', 'Cloudflare Images'],
                 'effort' => 'low',
+                'impact' => 'high',
             ],
             'oversizedImages' => [
-                'headline' => 'Full-resolution images sent even when displayed small.',
-                'detail' => "Your server sends 2400px images even when the browser renders them at 400px. {$dv} wasted per load. Add responsive `srcset` attributes or use an auto-resizing CDN (Cloudflare, Imgix, Bunny.net). Usually a 30-minute fix with massive impact.",
-                'tools' => ['srcset + sizes', 'Imgix', 'Bunny.net', 'Cloudflare Images'],
+                'headline' => 'Images delivered larger than display size',
+                'detail' => "Full-resolution images are sent when the display requires a fraction of that size — {$dv} wasted per load. Add `srcset` and `sizes` attributes or use an auto-resizing image CDN like Cloudflare or Imgix.",
+                'tools' => ['srcset + sizes', 'Imgix', 'Cloudflare Images', 'Bunny.net'],
                 'effort' => 'low',
+                'impact' => 'medium',
             ],
             'unusedJs' => [
-                'headline' => 'JavaScript bundles include dead code that never executes.',
-                'detail' => "Page-builder scripts, unused plugins, and jQuery bloat ship code that's never called. {$dv} executing unnecessarily. Audit with Chrome DevTools Coverage tab. Remove unused plugins, code-split with Laravel Mix, and replace heavy jQuery libs with lightweight vanilla JS alternatives.",
-                'tools' => ['Chrome Coverage Tab', 'Laravel Mix', 'Webpack Bundle Analyzer'],
+                'headline' => 'JavaScript bundles contain dead code',
+                'detail' => "JS bundles include code that never executes on this page — {$dv} loading for nothing. Open Chrome DevTools → Coverage to identify unused files. Remove unneeded plugins and enable code-splitting in Laravel Mix.",
+                'tools' => ['Chrome Coverage tab', 'Laravel Mix splitting', 'Bundle Analyzer'],
                 'effort' => 'high',
+                'impact' => 'high',
             ],
             'textCompression' => [
-                'headline' => 'HTML, CSS, and JS files are sent uncompressed to the browser.',
-                'detail' => "Your server isn't using Gzip or Brotli compression. {$dv} of savings — zero code changes required. Enable `mod_deflate` in Apache `.htaccess` or `gzip on` in Nginx. This 5-minute server fix typically reduces text transfer sizes by 60–80%.",
-                'tools' => ['Nginx gzip', 'Apache mod_deflate', 'Cloudflare (auto-enabled)'],
+                'headline' => 'Text assets served without compression',
+                'detail' => "HTML, CSS, and JS are sent uncompressed — {$dv} of savings with one config change. Enable `gzip on` in Nginx or `mod_deflate` in Apache. Typically cuts text transfer sizes by 60–80%.",
+                'tools' => ['Nginx gzip', 'Apache mod_deflate', 'Cloudflare (auto)'],
                 'effort' => 'low',
+                'impact' => 'medium',
             ],
             'cachePolicy' => [
-                'headline' => 'Static assets are re-downloaded by the browser on every visit.',
-                'detail' => "Without Cache-Control headers, returning visitors download your CSS, JS, and images fresh every time. Set `Cache-Control: max-age=31536000` for versioned assets. Laravel Mix appends file hashes automatically — pair with cache headers in Nginx or `.htaccess`.",
-                'tools' => ['Laravel Mix versioning', 'Nginx expires directive', '.htaccess cache headers'],
+                'headline' => 'Static assets have no browser cache headers',
+                'detail' => "Without `Cache-Control` headers, browsers re-download your CSS, JS, and images on every visit. Set `max-age=31536000` for versioned assets. Laravel Mix adds file hashes automatically — pair with server-level cache headers.",
+                'tools' => ['Laravel Mix versioning', 'Nginx expires', '.htaccess headers'],
                 'effort' => 'low',
+                'impact' => 'medium',
             ],
             'domSize' => [
-                'headline' => 'Too many HTML elements — the DOM is bloated.',
-                'detail' => "A DOM over 1,500 nodes slows rendering, style recalculation, and all JS operations. {$dv}. Usually caused by page builders (Elementor, Divi) or deeply nested templates. Simplify template structure, lazy-load off-screen sections, and cap nesting at 4–5 levels.",
-                'tools' => ['Chrome DevTools Elements panel', 'Lazy loading', 'Intersection Observer'],
+                'headline' => 'Excessive DOM size slows rendering',
+                'detail' => "A DOM over 1,500 nodes increases memory and slows layout, style recalculation, and JS execution. {$dv}. Common in page-builder sites. Simplify template structure and lazy-load off-screen content.",
+                'tools' => ['Lazy loading', 'Intersection Observer', 'DevTools Elements'],
                 'effort' => 'high',
+                'impact' => 'medium',
+            ],
+            'preconnect' => [
+                'headline' => 'Missing preconnect hints for external origins',
+                'detail' => "Resources load from external origins (fonts, analytics, CDN) without pre-warming the connections. Add `<link rel=\"preconnect\">` in `<head>` for each critical origin to cut DNS + TLS handshake latency on first use.",
+                'tools' => ['<link rel="preconnect">', '<link rel="dns-prefetch">'],
+                'effort' => 'low',
+                'impact' => 'low',
+            ],
+            'preload' => [
+                'headline' => 'Key resources not hinted for early loading',
+                'detail' => "Critical assets like your hero image or main font are discovered late in the waterfall. Add `<link rel=\"preload\">` hints so the browser fetches them earlier. This directly improves LCP for above-the-fold content.",
+                'tools' => ['<link rel="preload">', 'Webpack preload plugin'],
+                'effort' => 'low',
+                'impact' => 'medium',
+            ],
+            'thirdParty' => [
+                'headline' => 'Third-party scripts add significant load time',
+                'detail' => "External scripts (chat widgets, ad trackers, social embeds) are contributing {$dv} to your load time. Audit which are essential. Load non-critical scripts with `async` and consider self-hosting fonts and analytics.",
+                'tools' => ['Script audit', 'Partytown', 'Self-hosted Plausible'],
+                'effort' => 'medium',
+                'impact' => 'high',
+            ],
+            'animationPerf' => [
+                'headline' => 'Animations using non-composited CSS properties',
+                'detail' => "Animating `top`, `left`, `width`, or `margin` forces full repaints on every frame. Replace with `transform` and `opacity` — these are composited on the GPU and don't trigger layout recalculation.",
+                'tools' => ['CSS transform', 'CSS opacity', 'will-change: transform'],
+                'effort' => 'low',
+                'impact' => 'low',
             ],
             default => [
-                'headline' => $audit['title'] ?? 'Performance issue detected.',
-                'detail' => $audit['description'] ?? 'Review this audit in Chrome DevTools → Lighthouse tab.',
+                'headline' => $audit['title'] ?? 'Performance issue detected',
+                'detail' => $audit['description'] ?? 'Review this audit in Chrome DevTools → Lighthouse.',
                 'tools' => ['Chrome DevTools', 'Lighthouse CLI'],
                 'effort' => 'medium',
+                'impact' => 'medium',
             ],
         };
     }

@@ -13,35 +13,26 @@ class AnalyzerController extends Controller
     {
     }
 
-    /**
-     * Show the homepage with URL input form.
-     */
     public function index()
     {
         return view('index');
     }
 
-    /**
-     * Accept URL submission, run PageSpeed analysis, save & redirect to report.
-     */
     public function analyze(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'url' => ['required', 'url', 'max:500'],
+            'url' => ['required', 'max:500'],
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route('index')
-                ->withErrors($validator)
-                ->withInput();
+            return redirect()->route('index')->withErrors($validator)->withInput();
         }
 
-        $url = rtrim($request->input('url'), '/');
-
-        // Enforce https:// scheme so PSI always gets a valid URL
-        if (!str_starts_with($url, 'http')) {
+        $url = trim($request->input('url'));
+        if (!preg_match('#^https?://#i', $url)) {
             $url = 'https://' . $url;
         }
+        $url = rtrim($url, '/');
 
         try {
             $result = $this->pageSpeed->analyze($url);
@@ -54,50 +45,38 @@ class AnalyzerController extends Controller
         $report = Report::create([
             'url' => $url,
             'performance_score' => $result['score'],
-            'raw_json' => $result['raw'],
+            'raw_json' => $result['raw'], // stores both mobile + desktop
         ]);
 
-        // Cache parsed data in session so we don't re-parse on redirect
+        // Flash parsed data so report page doesn't need to re-parse
         session()->flash('vitals', $result['vitals']);
+        session()->flash('desktop_vitals', $result['desktop_vitals']);
         session()->flash('issues', $result['issues']);
+        session()->flash('desktop_score', $result['desktop_score']);
 
         return redirect()->route('report.show', $report->slug);
     }
 
-    /**
-     * Display a saved report by slug.
-     */
     public function show(Report $report)
     {
-        // Use session-flashed data (fresh analysis) OR re-parse from stored raw JSON
-        $vitals = session('vitals') ?? $this->reparsedVitals($report);
-        $issues = session('issues') ?? $this->reparsedIssues($report);
+        if (session()->has('vitals')) {
+            $vitals = session('vitals');
+            $desktopVitals = session('desktop_vitals');
+            $issues = session('issues');
+            $desktopScore = session('desktop_score');
+        } else {
+            // Re-parse from stored raw JSON
+            $raw = $report->raw_json;
+            $mobile = $raw['mobile'] ?? $raw;   // handle legacy single-strategy storage
+            $desktop = $raw['desktop'] ?? null;
 
-        return view('report', compact('report', 'vitals', 'issues'));
-    }
+            $result = $this->pageSpeed->parseFromRaw($mobile, $desktop);
+            $vitals = $result['vitals'];
+            $desktopVitals = $result['desktop_vitals'];
+            $issues = $result['issues'];
+            $desktopScore = $result['desktop_score'];
+        }
 
-    // ─── Helpers ────────────────────────────────────────────────────────────────
-
-    private function reparsedVitals(Report $report): array
-    {
-        if (!$report->raw_json)
-            return [];
-        $result = $this->pageSpeed->analyze($report->url);
-        return $result['vitals'];
-    }
-
-    private function reparsedIssues(Report $report): array
-    {
-        if (!$report->raw_json)
-            return [];
-
-        // Re-use stored raw JSON rather than hitting the API again
-        // We'll call a lightweight re-parse directly
-        $raw = $report->raw_json;
-        $audits = $raw['lighthouseResult']['audits'] ?? [];
-
-        // Inline minimal re-parse from stored JSON via the service
-        // To avoid a second API hit, expose a parseFromRaw method
-        return app(PageSpeedService::class)->parseFromRaw($raw)['issues'];
+        return view('report', compact('report', 'vitals', 'desktopVitals', 'issues', 'desktopScore'));
     }
 }

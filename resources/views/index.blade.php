@@ -9,7 +9,6 @@
     {{-- Hero --}}
     <div class="text-center mb-16 fade-up">
         <div class="inline-flex items-center gap-2 bg-brand-500/10 border border-brand-500/20 rounded-full px-4 py-1.5 mb-6">
-            <span class="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse-slow"></span>
             <span class="text-brand-400 text-xs font-mono font-medium tracking-wide">FREE PERFORMANCE AUDIT</span>
         </div>
 
@@ -44,7 +43,7 @@
                             placeholder="yourwebsite.com"
                             value="{{ old('url') }}"
                             required
-                            class="w-full bg-dark-700 border border-white/10 rounded-xl pl-18 pr-4 py-3.5
+                            class="w-full bg-dark-700 border border-white/10 rounded-xl pl-2 pr-4 py-3.5
                                    text-white placeholder-gray-600 font-mono text-sm
                                    focus:outline-none focus:border-brand-500/50 focus:ring-2 focus:ring-brand-500/20
                                    transition-all duration-200"

@@ -30,8 +30,8 @@
 
             {{-- Share button --}}
             <button onclick="copyShare()" id="shareBtn" class="flex items-center gap-2 bg-dark-800 border border-white/8 text-gray-400
-                               hover:text-white hover:border-white/20 rounded-lg px-4 py-2.5 text-sm
-                               transition-all duration-200 self-start sm:self-center">
+                                   hover:text-white hover:border-white/20 rounded-lg px-4 py-2.5 text-sm
+                                   transition-all duration-200 self-start sm:self-center">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -118,14 +118,14 @@
 
                         <div
                             class="bg-dark-800 border border-white/8 rounded-2xl overflow-hidden
-                                                hover:border-white/12 transition-colors duration-200 fade-up delay-{{ $loopIndex }}">
+                                                            hover:border-white/12 transition-colors duration-200 fade-up delay-{{ $loopIndex }}">
 
                             {{-- Issue header --}}
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 pb-0">
                                 <div class="flex items-start gap-3">
                                     <span
                                         class="flex-shrink-0 w-6 h-6 rounded-full bg-red-500/15 border border-red-500/25
-                                                             text-red-400 text-xs font-mono font-bold flex items-center justify-center mt-0.5">
+                                                                         text-red-400 text-xs font-mono font-bold flex items-center justify-center mt-0.5">
                                         {{ $loopIndex }}
                                     </span>
                                     <div>
@@ -174,7 +174,7 @@
 
         {{-- CTA — your lead generation engine --}}
         <div class="bg-gradient-to-br from-brand-500/10 to-brand-500/5 border border-brand-500/20
-                        rounded-2xl p-8 text-center fade-up delay-3">
+                            rounded-2xl p-8 text-center fade-up delay-3">
             <h2 class="text-white font-bold text-2xl mb-3">Want these issues fixed?</h2>
             <p class="text-gray-400 max-w-lg mx-auto mb-6 leading-relaxed">
                 I fix Core Web Vitals and performance issues for businesses.
@@ -185,13 +185,13 @@
             <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
                 {{-- 👇 Replace with your actual Calendly / WhatsApp / contact link --}}
                 <a href="https://calendly.com/aarifhsn/30min" target="_blank" class="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-7 py-3.5 rounded-xl
-                              transition-all duration-200 text-sm flex items-center gap-2">
+                                  transition-all duration-200 text-sm flex items-center gap-2">
                     📅 Book a free 15-min call
                 </a>
                 <a href="https://wa.me/01750128167?text=Hi!%20I%20just%20ran%20a%20performance%20report%20on%20my%20site%20and%20would%20love%20your%20help%20fixing%20it."
                     target="_blank" class="bg-dark-700 hover:bg-dark-600 border border-white/10 hover:border-white/20
-                              text-white font-semibold px-7 py-3.5 rounded-xl transition-all duration-200 text-sm
-                              flex items-center gap-2">
+                                  text-white font-semibold px-7 py-3.5 rounded-xl transition-all duration-200 text-sm
+                                  flex items-center gap-2">
                     💬 WhatsApp me
                 </a>
             </div>
