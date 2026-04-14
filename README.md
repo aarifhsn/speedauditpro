@@ -1,4 +1,4 @@
-# Core Web Vitals Fix Analyzer — Setup Guide
+# SPEED AUDIT PRO — Setup Guide
 
 > A Laravel MVP that analyzes any website and returns expert-level performance
 > reports with actionable fix advice. Your lead-generation engine.
@@ -17,8 +17,8 @@
 ## 1. Clone / create the Laravel project
 
 ```bash
-composer create-project laravel/laravel cwv-analyzer
-cd cwv-analyzer
+composer create-project laravel/laravel speedauditpro
+cd speedauditpro
 ```
 
 Then copy all the files from this repo into the project root, matching the
@@ -55,7 +55,7 @@ php artisan key:generate
 Edit `.env`:
 
 ```env
-DB_DATABASE=cwv_analyzer
+DB_DATABASE=speedaudit_db
 DB_USERNAME=your_db_user
 DB_PASSWORD=your_db_pass
 
@@ -162,7 +162,7 @@ php artisan view:cache
 ## File structure overview
 
 ```
-cwv-analyzer/
+speedauditpro/
 ├── app/
 │   ├── Http/Controllers/AnalyzerController.php   — routes logic
 │   ├── Models/Report.php                          — Eloquent model
@@ -186,4 +186,5 @@ cwv-analyzer/
 - [ ] Re-analyze button (hits API again)
 - [ ] Comparison: before vs after fix
 - [ ] User accounts + saved history
+
 # speedauditpro
