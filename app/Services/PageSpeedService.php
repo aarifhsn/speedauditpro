@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 
 class PageSpeedService
 {
@@ -12,36 +13,45 @@ class PageSpeedService
      * Run analysis for BOTH mobile AND desktop simultaneously.
      * Issue #1 fix: we no longer only show mobile — both are analyzed and displayed.
      */
-    public function analyze(string $url): array
+    public function analyze(string $url, bool $forceFresh = false): array
     {
-        $apiKey = config('services.pagespeed.key');
+        $cacheKey = 'pagespeed_' . md5($url);
 
-        // Fire both requests in parallel via HTTP pool
-        $responses = Http::pool(fn($pool) => [
-            $pool->as('mobile')->timeout(60)->get($this->baseUrl, [
-                'url' => $url,
-                'key' => $apiKey,
-                'strategy' => 'mobile',
-                'category' => 'performance',
-            ]),
-            $pool->as('desktop')->timeout(60)->get($this->baseUrl, [
-                'url' => $url,
-                'key' => $apiKey,
-                'strategy' => 'desktop',
-                'category' => 'performance',
-            ]),
-        ]);
-
-        if ($responses['mobile']->failed()) {
-            throw new \RuntimeException(
-                $responses['mobile']->json('error.message', 'PageSpeed API request failed.')
-            );
+        if ($forceFresh) {
+            Cache::forget($cacheKey);
         }
 
-        $mobileRaw = $responses['mobile']->json();
-        $desktopRaw = $responses['desktop']->ok() ? $responses['desktop']->json() : null;
+        return Cache::remember($cacheKey, now()->addMinutes(30), function () use ($url) {
 
-        return $this->parseFromRaw($mobileRaw, $desktopRaw);
+            $apiKey = config('services.pagespeed.key');
+
+            // Fire both requests in parallel via HTTP pool
+            $responses = Http::pool(fn($pool) => [
+                $pool->as('mobile')->timeout(60)->get($this->baseUrl, [
+                    'url' => $url,
+                    'key' => $apiKey,
+                    'strategy' => 'mobile',
+                    'category' => 'performance',
+                ]),
+                $pool->as('desktop')->timeout(60)->get($this->baseUrl, [
+                    'url' => $url,
+                    'key' => $apiKey,
+                    'strategy' => 'desktop',
+                    'category' => 'performance',
+                ]),
+            ]);
+
+            if ($responses['mobile']->failed()) {
+                throw new \RuntimeException(
+                    $responses['mobile']->json('error.message', 'PageSpeed API request failed.')
+                );
+            }
+
+            $mobileRaw = $responses['mobile']->json();
+            $desktopRaw = $responses['desktop']->ok() ? $responses['desktop']->json() : null;
+
+            return $this->parseFromRaw($mobileRaw, $desktopRaw);
+        });
     }
 
     /**

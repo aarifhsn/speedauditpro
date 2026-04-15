@@ -119,7 +119,7 @@
         /* Subtle dot-grid page texture */
         body {
             background-color: #0d1117;
-            background-image: radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px), url('/speedaudit-bg.webp');
+            background-image: radial-gradient(rgba(255, 255, 255, 0.60) 1px, transparent 1px), url('/speedaudit-bg.webp');
             background-size: 28px 28px, cover;
             background-position: 0 0, center;
             background-attachment: scroll, fixed;
@@ -128,6 +128,9 @@
 </head>
 
 <body class="min-h-full text-gray-100">
+
+    {{-- ── Dark Overlay ────────────────────────────────────────────────────── --}}
+    <div class="fixed inset-0 bg-black/90 z-0 pointer-events-none"></div>
 
     {{-- ── Nav ─────────────────────────────────────────────────────────────── --}}
     <header class="sticky top-0 z-50 border-b border-navy-700 bg-navy-950/90 backdrop-blur-sm">
@@ -195,7 +198,7 @@
                 </div>
                 <span class="text-sm font-medium text-gray-500">{{ config('app.name') }}</span>
             </div>
-            <p class="text-sm text-gray-600">&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+            <p class="text-sm text-gray-400">&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
         </div>
     </footer>
 

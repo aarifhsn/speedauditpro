@@ -11,7 +11,7 @@
         {{-- Badge --}}
         <div class="inline-flex items-center gap-2 bg-accent-600/10 border border-accent-500/25
                     text-accent-400 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide mb-7 fade-up">
-            <span class="w-1.5 h-1.5 rounded-full bg-accent-400 flex-shrink-0"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-accent-400 shrink-0"></span>
             Free performance audit · No signup required
         </div>
 
@@ -27,7 +27,7 @@
         </p>
 
         {{-- ── Input card ──────────────────────────────────────────────────── --}}
-        <div class="bg-navy-900 border border-navy-700 rounded-2xl p-6 sm:p-8 shadow-card text-left fade-up delay-2">
+        <div class="bg-navy-900/80 border border-navy-700 rounded-2xl p-6 sm:p-8 shadow-card text-left fade-up delay-2">
             <form action="{{ route('analyze') }}" method="POST" id="analyzeForm">
                 @csrf
 
@@ -86,7 +86,7 @@
                     </p>
                 @enderror
 
-                <p class="mt-4 text-xs text-gray-600 text-center">
+                <p class="mt-4 text-xs text-gray-400 text-center">
                     Analysis takes ~20 seconds · Tests both mobile &amp; desktop · Powered by Google PageSpeed
                 </p>
             </form>
@@ -96,7 +96,7 @@
 </section>
 
 {{-- ── Feature strip ───────────────────────────────────────────────────────── --}}
-<section class="border-t border-navy-700 bg-navy-900/50 py-14 mt-4 fade-up delay-3">
+<section class="border-t border-navy-700 bg-navy-900/80/50 py-14 mt-4 fade-up delay-3">
     <div class="max-w-5xl mx-auto px-5">
 
         <p class="text-center text-xs font-medium text-gray-500 uppercase tracking-widest mb-10">
@@ -105,7 +105,7 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
 
-            <div class="bg-navy-900 border border-navy-700 rounded-xl p-6 hover:border-navy-600 transition-colors">
+            <div class="bg-navy-900/80 border border-navy-700 rounded-xl p-6 hover:border-navy-600 transition-colors">
                 <div class="w-9 h-9 rounded-lg bg-accent-600/10 border border-accent-500/20
                             flex items-center justify-center mb-4 flex-shrink-0">
                     <svg class="w-5 h-5 text-accent-400" fill="none" viewBox="0 0 20 20">
@@ -119,7 +119,7 @@
                 </p>
             </div>
 
-            <div class="bg-navy-900 border border-navy-700 rounded-xl p-6 hover:border-navy-600 transition-colors">
+            <div class="bg-navy-900/80 border border-navy-700 rounded-xl p-6 hover:border-navy-600 transition-colors">
                 <div class="w-9 h-9 rounded-lg bg-accent-600/10 border border-accent-500/20
                             flex items-center justify-center mb-4 flex-shrink-0">
                     <svg class="w-5 h-5 text-accent-400" fill="none" viewBox="0 0 20 20">
@@ -134,7 +134,7 @@
                 </p>
             </div>
 
-            <div class="bg-navy-900 border border-navy-700 rounded-xl p-6 hover:border-navy-600 transition-colors">
+            <div class="bg-navy-900/80 border border-navy-700 rounded-xl p-6 hover:border-navy-600 transition-colors">
                 <div class="w-9 h-9 rounded-lg bg-accent-600/10 border border-accent-500/20
                             flex items-center justify-center mb-4 flex-shrink-0">
                     <svg class="w-5 h-5 text-accent-400" fill="none" viewBox="0 0 20 20">

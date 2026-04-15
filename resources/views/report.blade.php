@@ -46,22 +46,39 @@
         {{-- ── Page header ──────────────────────────────────────────────────────── --}}
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 fade-up">
             <div>
-                <p class="text-gray-600 text-xs font-mono mb-1.5">performance report</p>
+                <p class="text-gray-400 text-xs font-mono mb-1.5">performance report</p>
                 <h1 class="text-white font-bold text-2xl break-all">{{ $host }}</h1>
-                <p class="text-gray-600 text-xs font-mono mt-1 break-all">{{ $report->url }}</p>
-                <p class="text-gray-600 text-xs mt-1.5">Analyzed {{ $report->created_at->diffForHumans() }}</p>
+                <p class="text-gray-400 text-xs font-mono mt-1 break-all">{{ $report->url }}</p>
+                <p class="text-gray-400 text-xs mt-1.5">Analyzed {{ $report->created_at->diffForHumans() }}</p>
             </div>
 
-            <button onclick="copyShareLink()" id="shareBtn" class="inline-flex items-center gap-2 bg-navy-800 border border-navy-600
-                               text-gray-400 hover:text-gray-200 hover:border-navy-500
-                               rounded-lg px-4 py-2.5 text-sm transition-all duration-150
-                               self-start flex-shrink-0">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 16 16">
-                    <path d="M10.5 1.5h4v4M14.5 1.5l-6 6M6 3H2.5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V9.5"
-                        stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <span id="shareBtnLabel">Share report</span>
-            </button>
+            <div class="flex justify-between items-center gap-2">
+                <button onclick="copyShareLink()" id="shareBtn"
+                    class="inline-flex items-center gap-2 bg-navy-800 border border-navy-600
+                                                                                                   text-gray-400 hover:text-gray-200 hover:border-navy-500
+                                                                                                   rounded-lg px-4 py-2.5 text-sm transition-all duration-150
+                                                                                                   self-start flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 16 16">
+                        <path d="M10.5 1.5h4v4M14.5 1.5l-6 6M6 3H2.5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V9.5"
+                            stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span id="shareBtnLabel">Share report</span>
+                </button>
+
+                <form action="{{ route('analyze') }}" method="POST" class="inline">
+                    @csrf
+                    <input type="hidden" name="url" value="{{ $report->url }}">
+                    <input type="hidden" name="refresh" value="1">
+                    <button type="submit"
+                        class="inline-flex items-center gap-2 bg-accent-600 text-white rounded-lg px-4 py-2.5 text-sm hover:bg-accent-500 transition-colors self-start">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v6h6M20 20v-6h-6M5 19a9 9 0 0114-7M19 5a9 9 0 00-14 7" />
+                        </svg>
+                        Re-analyze
+                    </button>
+                </form>
+            </div>
         </div>
 
         {{-- ── Performance Scores ───────────────────────────────────────────────── --}}
@@ -71,7 +88,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
 
                 {{-- Mobile --}}
-                <div class="bg-navy-900 border {{ $mt['border'] }} rounded-2xl p-5 flex items-center gap-5 shadow-card">
+                <div class="bg-navy-900/80 border {{ $mt['border'] }} rounded-2xl p-5 flex items-center gap-5 shadow-card">
                     <div class="relative w-[88px] h-[88px] flex-shrink-0">
                         <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
                             <circle cx="60" cy="60" r="50" stroke="rgba(255,255,255,0.07)" stroke-width="10" fill="none" />
@@ -81,7 +98,7 @@
                         <div class="absolute inset-0 flex flex-col items-center justify-center">
                             <span
                                 class="{{ $mt['text'] }} text-[28px] font-bold leading-none font-mono">{{ $mobileScore }}</span>
-                            <span class="text-gray-600 text-[10px] mt-0.5">/ 100</span>
+                            <span class="text-gray-400 text-[10px] mt-0.5">/ 100</span>
                         </div>
                     </div>
                     <div class="min-w-0">
@@ -105,7 +122,7 @@
 
                 {{-- Desktop --}}
                 @if($desktopScore && $dt)
-                    <div class="bg-navy-900 border {{ $dt['border'] }} rounded-2xl p-5 flex items-center gap-5 shadow-card">
+                    <div class="bg-navy-900/80 border {{ $dt['border'] }} rounded-2xl p-5 flex items-center gap-5 shadow-card">
                         <div class="relative w-[88px] h-[88px] flex-shrink-0">
                             <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
                                 <circle cx="60" cy="60" r="50" stroke="rgba(255,255,255,0.07)" stroke-width="10" fill="none" />
@@ -115,7 +132,7 @@
                             <div class="absolute inset-0 flex flex-col items-center justify-center">
                                 <span
                                     class="{{ $dt['text'] }} text-[28px] font-bold leading-none font-mono">{{ $desktopScore }}</span>
-                                <span class="text-gray-600 text-[10px] mt-0.5">/ 100</span>
+                                <span class="text-gray-400 text-[10px] mt-0.5">/ 100</span>
                             </div>
                         </div>
                         <div class="min-w-0">
@@ -146,7 +163,7 @@
         <section class="fade-up delay-2">
             <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-widest">Core Web Vitals</p>
-                <span class="text-xs text-gray-600">Mobile · measured against Google's thresholds</span>
+                <span class="text-xs text-gray-400">Mobile · measured against Google's thresholds</span>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -158,18 +175,18 @@
                             <span class="{{ $vt['text'] }} text-[11px] font-semibold font-mono">{{ $vital['label'] }}</span>
                         </div>
                         <p class="{{ $vt['num'] }} text-xl font-bold font-mono leading-none">{{ $vital['value'] }}</p>
-                        <p class="text-gray-600 text-[10px] mt-1.5 leading-tight">{{ $vital['fullName'] }}</p>
+                        <p class="text-gray-400 text-[10px] mt-1.5 leading-tight">{{ $vital['fullName'] }}</p>
                     </div>
                 @endforeach
             </div>
 
             {{-- Legend --}}
             <div class="flex items-center gap-5 mt-3 flex-wrap">
-                <span class="flex items-center gap-1.5 text-xs text-gray-600"><span
+                <span class="flex items-center gap-1.5 text-xs text-gray-400"><span
                         class="w-2 h-2 rounded-full bg-green-400"></span>Good</span>
-                <span class="flex items-center gap-1.5 text-xs text-gray-600"><span
+                <span class="flex items-center gap-1.5 text-xs text-gray-400"><span
                         class="w-2 h-2 rounded-full bg-amber-400"></span>Needs improvement</span>
-                <span class="flex items-center gap-1.5 text-xs text-gray-600"><span
+                <span class="flex items-center gap-1.5 text-xs text-gray-400"><span
                         class="w-2 h-2 rounded-full bg-red-400"></span>Poor</span>
             </div>
         </section>
@@ -212,17 +229,19 @@
                             $idx = $loop->iteration;
                         @endphp
 
-                        <div class="bg-navy-900 border border-navy-700 rounded-2xl overflow-hidden
-                                                hover:border-navy-600 transition-colors duration-150 shadow-card">
+                        <div
+                            class="bg-navy-900/80 border border-navy-700 rounded-2xl overflow-hidden
+                                                                                                                                                                                                                                                            hover:border-navy-600 transition-colors duration-150 shadow-card">
 
                             <div class="p-5">
                                 {{-- Title row --}}
                                 <div class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
 
                                     {{-- Number --}}
-                                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-navy-700 border border-navy-600
-                                                             text-gray-500 text-[11px] font-mono font-semibold
-                                                             flex items-center justify-center mt-0.5">
+                                    <span
+                                        class="flex-shrink-0 w-6 h-6 rounded-full bg-navy-700 border border-navy-600
+                                                                                                                                                                                                                                                                         text-gray-500 text-[11px] font-mono font-semibold
+                                                                                                                                                                                                                                                                         flex items-center justify-center mt-0.5">
                                         {{ $idx }}
                                     </span>
 
@@ -249,7 +268,7 @@
                                         @if($issue['displayValue'])
                                             <span
                                                 class="inline-flex items-center text-[11px] font-mono text-gray-500
-                                                                         bg-navy-800 border border-navy-600 rounded-md px-2.5 py-1 mb-3">
+                                                                                                                                                                                                                                                                                                                                                         bg-navy-800 border border-navy-600 rounded-md px-2.5 py-1 mb-3">
                                                 {{ $issue['displayValue'] }}
                                             </span>
                                         @endif
@@ -262,7 +281,7 @@
                                         {{-- Tools --}}
                                         @if(!empty($issue['fix']['tools']))
                                             <div class="flex flex-wrap items-center gap-2">
-                                                <span class="text-xs text-gray-600 font-medium">Fix with:</span>
+                                                <span class="text-xs text-gray-400 font-medium">Fix with:</span>
                                                 @foreach($issue['fix']['tools'] as $tool)
                                                     <span
                                                         class="text-[11px] font-mono text-gray-400 bg-navy-800 border border-navy-600 rounded-md px-2.5 py-1">
@@ -285,8 +304,8 @@
 
         {{-- ── CTA ───────────────────────────────────────────────────────────────── --}}
         <section class="fade-up delay-4">
-            <div class="bg-navy-900 border border-navy-700 rounded-2xl p-8 sm:p-10 text-center
-                            relative overflow-hidden">
+            <div class="bg-navy-900/80 border border-navy-700 rounded-2xl p-8 sm:p-10 text-center
+                                                                                                relative overflow-hidden">
 
                 {{-- Subtle accent glow behind --}}
                 <div
@@ -303,9 +322,10 @@
 
                     <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
                         {{-- 👇 Replace with your Calendly link --}}
-                        <a href="https://calendly.com/aarifhsn/30min" target="_blank" rel="noopener" class="inline-flex items-center gap-2.5 bg-accent-600 hover:bg-accent-500
-                                      text-white font-semibold text-[15px] px-7 py-3.5 rounded-xl
-                                      transition-colors duration-150 w-full sm:w-auto justify-center">
+                        <a href="https://calendly.com/aarifhsn/30min" target="_blank" rel="noopener"
+                            class="inline-flex items-center gap-2.5 bg-accent-600 hover:bg-accent-500
+                                                                                                          text-white font-semibold text-[15px] px-7 py-3.5 rounded-xl
+                                                                                                          transition-colors duration-150 w-full sm:w-auto justify-center">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 16 16">
                                 <rect x="1.5" y="3" width="13" height="11" rx="1.25" stroke="currentColor"
                                     stroke-width="1.25" />
@@ -317,10 +337,11 @@
 
                         {{-- 👇 Replace 01750128167 with your number --}}
                         <a href="https://wa.me/01750128167?text={{ urlencode('Hi! I ran a speed audit on ' . $report->url . ' and would love your help fixing the issues.') }}"
-                            target="_blank" rel="noopener" class="inline-flex items-center gap-2.5 bg-navy-800 hover:bg-navy-700
-                                      border border-navy-600 hover:border-navy-500
-                                      text-white font-semibold text-[15px] px-7 py-3.5 rounded-xl
-                                      transition-all duration-150 w-full sm:w-auto justify-center">
+                            target="_blank" rel="noopener"
+                            class="inline-flex items-center gap-2.5 bg-navy-800 hover:bg-navy-700
+                                                                                                          border border-navy-600 hover:border-navy-500
+                                                                                                          text-white font-semibold text-[15px] px-7 py-3.5 rounded-xl
+                                                                                                          transition-all duration-150 w-full sm:w-auto justify-center">
                             <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 16 16">
                                 <path
                                     d="M8 .5a7.5 7.5 0 0 1 6.5 11.22L16 15.5l-3.88-1.48A7.5 7.5 0 1 1 8 .5zm0 1.5A6 6 0 1 0 12.4 12.5l.16.06 2.19.83-.84-2.13.09-.18A6 6 0 0 0 8 2zm-1.8 2.82c.17 0 .34.01.47.04.15.04.32.11.48.47l.62 1.44c.1.23.06.49-.07.69l-.45.62a.32.32 0 0 0-.03.36c.28.47.74 1.03 1.22 1.4.49.39 1.07.66 1.53.8a.32.32 0 0 0 .34-.11l.5-.66c.17-.22.42-.3.67-.2l1.5.6c.37.14.46.31.48.47.06.35.02 1.16-.69 1.55-.7.38-1.62.43-2.87-.28-1.25-.72-2.52-2-3.16-3.24-.63-1.22-.38-2.14-.09-2.7.3-.55.81-.7 1.05-.7z" />
@@ -329,7 +350,7 @@
                         </a>
                     </div>
 
-                    <p class="mt-6 text-xs text-gray-600">
+                    <p class="mt-6 text-xs text-gray-400">
                         Share this report:
                         <button onclick="copyShareLink()"
                             class="text-gray-500 hover:text-gray-300 underline underline-offset-2 transition-colors ml-1 font-mono">

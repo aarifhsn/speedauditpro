@@ -33,9 +33,10 @@ class AnalyzerController extends Controller
             $url = 'https://' . $url;
         }
         $url = rtrim($url, '/');
+        $forceFresh = $request->boolean('refresh');
 
         try {
-            $result = $this->pageSpeed->analyze($url);
+            $result = $this->pageSpeed->analyze($url, $forceFresh);
         } catch (\RuntimeException $e) {
             return redirect()->route('index')
                 ->with('error', 'Could not analyze this URL: ' . $e->getMessage())
