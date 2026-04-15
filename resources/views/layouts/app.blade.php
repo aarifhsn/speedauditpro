@@ -119,7 +119,7 @@
         /* Subtle dot-grid page texture */
         body {
             background-color: #0d1117;
-            background-image: radial-gradient(rgba(255, 255, 255, 0.60) 1px, transparent 1px), url('/speedaudit-bg.webp');
+            background-image: radial-gradient(rgba(255, 255, 255, 0.60) 1px, transparent 1px), url('/speedauditpro-bg.webp');
             background-size: 28px 28px, cover;
             background-position: 0 0, center;
             background-attachment: scroll, fixed;

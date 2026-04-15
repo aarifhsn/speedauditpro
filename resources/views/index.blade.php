@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'PageVitals — Free Core Web Vitals Analyzer')
+@section('title', 'SpeedAuditPro — Free Core Web Vitals Analyzer')
 
 @section('content')
 
