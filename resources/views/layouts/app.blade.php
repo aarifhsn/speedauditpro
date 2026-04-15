@@ -130,7 +130,7 @@
 <body class="min-h-full text-gray-100">
 
     {{-- ── Dark Overlay ────────────────────────────────────────────────────── --}}
-    <div class="fixed inset-0 bg-black/90 z-0 pointer-events-none"></div>
+    <div class="fixed inset-0 bg-black/99 z-0 pointer-events-none"></div>
 
     {{-- ── Nav ─────────────────────────────────────────────────────────────── --}}
     <header class="sticky top-0 z-50 border-b border-navy-700 bg-navy-950/90 backdrop-blur-sm">
@@ -188,7 +188,7 @@
 
     {{-- ── Footer ─────────────────────────────────────────────────────────── --}}
     <footer class="border-t border-navy-700 mt-24 py-8">
-        <div class="max-w-5xl mx-auto px-5 flex items-center justify-between flex-wrap gap-4">
+        <div class="max-w-5xl mx-auto px-5 flex items-center justify-between flex-wrap gap-4 z-20 relative ">
             <div class="flex items-center gap-2">
                 <div class="w-5 h-5 rounded-md bg-accent-600 flex items-center justify-center flex-shrink-0">
                     <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 16 16">
@@ -196,9 +196,9 @@
                             stroke-linejoin="round" />
                     </svg>
                 </div>
-                <span class="text-sm font-medium text-gray-500">{{ config('app.name') }}</span>
+                <span class="text-sm font-medium text-gray-200">{{ config('app.name') }}</span>
             </div>
-            <p class="text-sm text-gray-400">&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+            <p class="text-sm text-gray-200">&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
         </div>
     </footer>
 
