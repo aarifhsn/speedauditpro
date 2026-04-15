@@ -11,8 +11,7 @@
         {{-- Badge --}}
         <div class="inline-flex items-center gap-2 bg-accent-600/10 border border-accent-500/25
                     text-accent-400 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide mb-7 fade-up">
-            <span class="w-1.5 h-1.5 rounded-full bg-accent-400 shrink-0"></span>
-            Free performance audit · No signup required
+            Free performance audit
         </div>
 
         <h1 class="text-4xl sm:text-5xl font-bold text-white leading-tight tracking-tight mb-5 fade-up delay-1">

@@ -130,7 +130,7 @@
 <body class="min-h-full text-gray-100">
 
     {{-- ── Dark Overlay ────────────────────────────────────────────────────── --}}
-    <div class="fixed inset-0 bg-black/99 z-0 pointer-events-none"></div>
+    <div class="fixed inset-0 bg-black/90 z-0 pointer-events-none"></div>
 
     {{-- ── Nav ─────────────────────────────────────────────────────────────── --}}
     <header class="sticky top-0 z-50 border-b border-navy-700 bg-navy-950/90 backdrop-blur-sm">
