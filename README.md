@@ -45,7 +45,7 @@ No extra packages needed for the MVP — it uses Laravel's built-in HTTP client.
 
 ---
 
-## 4. Configure environment
+## Configure environment
 
 ```bash
 cp .env.example .env
@@ -64,7 +64,7 @@ PAGESPEED_API_KEY=AIzaSy...your_key_here
 
 ---
 
-## 5. Run database migration
+## Run database migration
 
 ```bash
 php artisan migrate
@@ -74,7 +74,7 @@ This creates the single `reports` table.
 
 ---
 
-## 6. Add PageSpeed key to `config/services.php`
+## Add PageSpeed key to `config/services.php`
 
 Open `config/services.php` and add:
 
@@ -86,7 +86,7 @@ Open `config/services.php` and add:
 
 ---
 
-## 7. Place the files
+## Place the files
 
 ```
 app/
@@ -105,7 +105,7 @@ routes/
 
 ---
 
-## 8. Run locally
+## Run locally
 
 ```bash
 php artisan serve
@@ -115,20 +115,7 @@ Visit http://localhost:8000
 
 ---
 
-## 9. Customize the CTA (IMPORTANT — your money maker)
-
-In `resources/views/report.blade.php`, find the **CTA section** near the bottom
-and replace:
-
-```html
-href="https://calendly.com/YOUR_LINK" href="https://wa.me/YOUR_NUMBER?text=..."
-```
-
-with your actual Calendly URL and WhatsApp number.
-
----
-
-## 10. Deploy to production
+# Deploy to production
 
 ### Shared hosting / cPanel
 
@@ -144,18 +131,6 @@ php artisan view:cache
 - Use Nginx + PHP-FPM
 - Point document root to `public/`
 - Set up SSL via Let's Encrypt (Certbot)
-
-### Quick option: Laravel Forge + DigitalOcean $6/mo droplet
-
----
-
-## How to use this as a lead-generation engine
-
-1. Find a slow website (use BuiltWith, Google search, local businesses)
-2. Run your tool on their URL
-3. Copy the shareable report link
-4. Send them: _"I ran a free audit on your site — here's what I found: [link]. I can fix these in 2–3 days."_
-5. Link to your Calendly or WhatsApp in the CTA
 
 ---
 
@@ -176,15 +151,5 @@ speedauditpro/
 ├── config/services.php                            — add pagespeed key here
 └── .env.example
 ```
-
----
-
-## Phase 2 ideas (only after MVP is generating leads)
-
-- [ ] PDF export of the report
-- [ ] Email the report to user
-- [ ] Re-analyze button (hits API again)
-- [ ] Comparison: before vs after fix
-- [ ] User accounts + saved history
 
 # speedauditpro
