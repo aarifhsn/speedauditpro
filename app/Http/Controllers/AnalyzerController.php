@@ -77,6 +77,8 @@ class AnalyzerController extends Controller
             $desktopScore = $result['desktop_score'];
         }
 
-        return view('report', compact('report', 'vitals', 'desktopVitals', 'issues', 'desktopScore'));
+        $mobileScore = $report->performance_score;
+
+        return view('report', compact('report', 'mobileScore', 'vitals', 'desktopVitals', 'issues', 'desktopScore'));
     }
 }

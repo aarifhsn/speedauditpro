@@ -83,7 +83,7 @@ class PageSpeedService
     {
         $audit = $audits[$key] ?? null;
         if (!$audit) {
-            return ['label' => $label, 'abbr' => $abbr, 'value' => 'N/A', 'score' => null, 'status' => 'na'];
+            return ['label' => $label, 'abbr' => $abbr, 'fullName' => $label, 'value' => 'N/A', 'score' => null, 'status' => 'na'];
         }
         $score = $audit['score'] ?? null;
         $status = match (true) {
@@ -95,6 +95,7 @@ class PageSpeedService
         return [
             'label' => $label,
             'abbr' => $abbr,
+            'fullName' => $label,
             'value' => $audit['displayValue'] ?? 'N/A',
             'score' => $score,
             'status' => $status,

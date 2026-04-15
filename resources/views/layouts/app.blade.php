@@ -4,103 +4,90 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@yield('title', 'Core Web Vitals Analyzer')</title>
+    <title>@yield('title', 'speedAuditPro — Core Web Vitals Analyzer')</title>
     <meta name="description"
-        content="Get a free, expert-level performance report for any website. Understand exactly what's slowing you down — and how to fix it." />
+        content="Get a free expert performance report for any website. Understand exactly what's slowing you down — and how to fix it." />
 
-    {{-- Tailwind CSS (CDN for MVP — swap to Vite/Mix build in production) --}}
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        mono: ['"JetBrains Mono"', 'monospace'],
-                        display: ['"Space Grotesk"', 'sans-serif'],
+                        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+                        mono: ['"DM Mono"', 'monospace'],
                     },
                     colors: {
-                        brand: {
-                            50: '#f0fdf4',
-                            400: '#4ade80',
-                            500: '#22c55e',
-                            600: '#16a34a',
+                        /* ── Single design-token palette ── */
+                        navy: {
+                            950: '#0d1117',   /* page background */
+                            900: '#13192a',   /* card background */
+                            800: '#1a2235',   /* card hover / input bg */
+                            700: '#22304a',   /* borders */
+                            600: '#2e3f5e',   /* subtle borders */
                         },
-                        dark: {
-                            900: '#0a0f0d',
-                            800: '#0f1a14',
-                            700: '#162010',
-                            600: '#1e2d1a',
-                        }
+                        accent: {
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                        },
+                        /* Status colours — used consistently everywhere */
+                        good: { DEFAULT: '#22c55e', light: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.25)' },
+                        warn: { DEFAULT: '#f59e0b', light: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)' },
+                        poor: { DEFAULT: '#ef4444', light: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.25)' },
                     },
-                    animation: {
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    }
+                    boxShadow: {
+                        card: '0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2)',
+                        glow: '0 0 0 3px rgba(59,130,246,0.25)',
+                    },
                 }
             }
         }
     </script>
 
-    {{-- Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap"
         rel="stylesheet" />
 
     <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            -webkit-font-smoothing: antialiased;
+        }
+
         body {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'DM Sans', system-ui, sans-serif;
         }
 
-        code,
-        .mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        /* Terminal-style scanline effect on score card */
-        .scanlines::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: repeating-linear-gradient(0deg,
-                    transparent,
-                    transparent 2px,
-                    rgba(0, 0, 0, 0.03) 2px,
-                    rgba(0, 0, 0, 0.03) 4px);
-            pointer-events: none;
-            border-radius: inherit;
-        }
-
-        /* Subtle grid background */
-        .grid-bg {
-            background-image:
-                linear-gradient(rgba(34, 197, 94, 0.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(34, 197, 94, 0.04) 1px, transparent 1px);
-            background-size: 32px 32px;
-        }
-
-        /* Score ring animation */
-        @keyframes ring-fill {
+        /* Score ring */
+        @keyframes ring-in {
             from {
                 stroke-dashoffset: 314;
             }
 
             to {
-                stroke-dashoffset: var(--target-offset);
+                stroke-dashoffset: var(--offset);
             }
         }
 
-        .score-ring {
-            animation: ring-fill 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        .score-arc {
             stroke-dasharray: 314;
             stroke-dashoffset: 314;
+            animation: ring-in 1s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
         }
 
-        /* Fade-in-up for cards */
+        /* Page fade-up */
         @keyframes fadeUp {
             from {
                 opacity: 0;
-                transform: translateY(16px);
+                transform: translateY(12px);
             }
 
             to {
@@ -110,67 +97,105 @@
         }
 
         .fade-up {
-            animation: fadeUp 0.5s ease forwards;
-            opacity: 0;
+            animation: fadeUp 0.45s ease both;
         }
 
         .delay-1 {
-            animation-delay: 0.1s;
+            animation-delay: 0.08s;
         }
 
         .delay-2 {
-            animation-delay: 0.2s;
+            animation-delay: 0.16s;
         }
 
         .delay-3 {
-            animation-delay: 0.3s;
+            animation-delay: 0.24s;
         }
 
         .delay-4 {
-            animation-delay: 0.4s;
+            animation-delay: 0.32s;
         }
 
-        .delay-5 {
-            animation-delay: 0.5s;
+        /* Subtle dot-grid page texture */
+        body {
+            background-color: #0d1117;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px), url('/speedaudit-bg.webp');
+            background-size: 28px 28px, cover;
+            background-position: 0 0, center;
+            background-attachment: scroll, fixed;
         }
     </style>
 </head>
 
-<body class="min-h-full bg-dark-900 text-gray-100 grid-bg">
+<body class="min-h-full text-gray-100">
 
-    {{-- Nav --}}
-    <nav class="border-b border-white/5 bg-dark-900/80 backdrop-blur-sm sticky top-0 z-50">
-        <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-            <a href="{{ route('index') }}" class="flex items-center gap-2 group">
-                <span
-                    class="text-brand-400 font-mono text-lg font-semibold group-hover:text-brand-500 transition-colors">&gt;_
-                    {{ config('app.name') }}</span>
+    {{-- ── Nav ─────────────────────────────────────────────────────────────── --}}
+    <header class="sticky top-0 z-50 border-b border-navy-700 bg-navy-950/90 backdrop-blur-sm">
+        <div class="max-w-5xl mx-auto px-5 h-14 flex items-center justify-between">
+
+            <a href="{{ route('index') }}" class="flex items-center gap-2.5 group">
+                <div class="w-7 h-7 rounded-lg bg-accent-600 flex items-center justify-center flex-shrink-0
+                            group-hover:bg-accent-500 transition-colors">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 16 16">
+                        <path d="M2.5 12.5L8 3.5l5.5 9H2.5z" stroke="currentColor" stroke-width="1.5"
+                            stroke-linejoin="round" />
+                        <path d="M5.5 9.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <span class="font-semibold text-white text-[15px]">{{ config('app.name') }}</span>
             </a>
+
             <a href="{{ route('index') }}"
-                class="text-xs font-mono text-gray-500 hover:text-brand-400 transition-colors">
-                ← new analysis
+                class="text-sm text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 14 14">
+                    <path d="M11 7H3M6 4L3 7l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                New analysis
             </a>
         </div>
-    </nav>
+    </header>
 
-    {{-- Flash error --}}
+    {{-- ── Flash errors ─────────────────────────────────────────────────────── --}}
     @if(session('error'))
-        <div class="max-w-5xl mx-auto px-4 pt-4">
-            <div class="bg-red-900/30 border border-red-500/30 text-red-300 rounded-lg px-4 py-3 text-sm font-mono">
-                ⚠ {{ session('error') }}
+        <div class="max-w-5xl mx-auto px-5 pt-5">
+            <div class="flex gap-3 bg-red-900/30 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm">
+                <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 16 16">
+                    <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M8 5v3M8 10v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                {{ session('error') }}
             </div>
         </div>
     @endif
 
-    {{-- Main content --}}
-    <main>
-        @yield('content')
-    </main>
+    @if($errors->any())
+        <div class="max-w-5xl mx-auto px-5 pt-5">
+            <div class="flex gap-3 bg-red-900/30 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm">
+                <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 16 16">
+                    <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M8 5v3M8 10v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                {{ $errors->first() }}
+            </div>
+        </div>
+    @endif
 
-    {{-- Footer --}}
-    <footer class="border-t border-white/5 mt-24 py-8">
-        <div class="max-w-5xl mx-auto px-4 text-center text-gray-600 text-xs font-mono">
-            cwv-analyzer · built with Laravel + PageSpeed Insights API
+    <main>@yield('content')</main>
+
+    {{-- ── Footer ─────────────────────────────────────────────────────────── --}}
+    <footer class="border-t border-navy-700 mt-24 py-8">
+        <div class="max-w-5xl mx-auto px-5 flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-md bg-accent-600 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 16 16">
+                        <path d="M2.5 12.5L8 3.5l5.5 9H2.5z" stroke="currentColor" stroke-width="1.5"
+                            stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-gray-500">{{ config('app.name') }}</span>
+            </div>
+            <p class="text-sm text-gray-600">&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
         </div>
     </footer>
 
